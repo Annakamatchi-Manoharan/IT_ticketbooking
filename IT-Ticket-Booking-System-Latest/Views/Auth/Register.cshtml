@@ -1,0 +1,82 @@
+@model ITBookingSystem.DTOs.RegisterDto
+@{
+    Layout = null;
+    ViewData["Title"] = "Sign Up";
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - ITBookingSystem</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+</head>
+<body class="min-h-screen bg-slate-950 text-slate-900">
+    <div class="min-h-screen grid grid-cols-1 lg:grid-cols-2">
+        <div class="hidden lg:flex items-center justify-center bg-gradient-to-br from-indigo-600 to-sky-600 text-white p-12">
+            <div class="max-w-lg">
+                <div class="text-sm uppercase tracking-[0.2em] text-white/70">Enterprise Onboarding</div>
+                <h1 class="mt-4 text-5xl font-bold leading-tight">Create your support portal account</h1>
+                <p class="mt-5 text-white/85">
+                    Sign up as an end user to create and track IT support tickets in real time.
+                </p>
+            </div>
+        </div>
+
+        <div class="flex items-center justify-center p-6 lg:p-12 bg-slate-50">
+            <div class="w-full max-w-md">
+                <h2 class="text-3xl font-semibold text-slate-900">Sign Up</h2>
+                <p class="mt-1 text-sm text-slate-500">Create your user account to submit IT tickets.</p>
+
+                <form class="mt-8 space-y-4" asp-controller="Auth" asp-action="Register" method="post">
+                    @Html.AntiForgeryToken()
+                    <div asp-validation-summary="All" class="text-sm text-red-600"></div>
+
+                    <div>
+                        <label class="text-sm font-medium text-slate-700">Full Name</label>
+                        <input class="mt-2 w-full rounded-xl border border-slate-200 px-4 py-3 outline-none focus:ring-4 focus:ring-sky-100 focus:border-sky-300"
+                               asp-for="Username" placeholder="e.g., Jane Smith" />
+                        <span class="text-xs text-red-600" asp-validation-for="Username"></span>
+                    </div>
+
+                    <div>
+                        <label class="text-sm font-medium text-slate-700">Email Address</label>
+                        <input class="mt-2 w-full rounded-xl border border-slate-200 px-4 py-3 outline-none focus:ring-4 focus:ring-sky-100 focus:border-sky-300"
+                               asp-for="Email" placeholder="name@company.com" />
+                        <span class="text-xs text-red-600" asp-validation-for="Email"></span>
+                    </div>
+
+                    <div>
+                        <label class="text-sm font-medium text-slate-700">Password</label>
+                        <input type="password"
+                               class="mt-2 w-full rounded-xl border border-slate-200 px-4 py-3 outline-none focus:ring-4 focus:ring-sky-100 focus:border-sky-300"
+                               asp-for="Password" placeholder="Minimum 6 characters" />
+                        <span class="text-xs text-red-600" asp-validation-for="Password"></span>
+                    </div>
+
+                    <div>
+                        <label class="text-sm font-medium text-slate-700">Confirm Password</label>
+                        <input type="password"
+                               class="mt-2 w-full rounded-xl border border-slate-200 px-4 py-3 outline-none focus:ring-4 focus:ring-sky-100 focus:border-sky-300"
+                               asp-for="ConfirmPassword" placeholder="Re-enter password" />
+                        <span class="text-xs text-red-600" asp-validation-for="ConfirmPassword"></span>
+                    </div>
+
+                    <button class="w-full rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-semibold py-3" type="submit">
+                        Create Account
+                    </button>
+
+                    <div class="pt-3 text-center text-sm text-slate-500">
+                        Already have an account?
+                        <a class="font-medium text-sky-600 hover:text-sky-700" asp-controller="Auth" asp-action="Login">Sign in</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <partial name="_ValidationScriptsPartial" />
+</body>
+</html>

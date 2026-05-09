@@ -1,0 +1,46 @@
+# Build artifacts
+bin/
+obj/
+artifacts/
+
+# User-specific files
+*.user
+*.rsuser
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Visual Studio / VS Code
+.vs/
+.vscode/
+
+# ASP.NET Core / tooling
+Properties/launchSettings.json
+
+# Logs
+*.log
+Logs/
+
+# NuGet
+*.nupkg
+*.snupkg
+packages/
+
+# Test output / coverage
+TestResults/
+coverage/
+*.coverage
+*.coveragexml
+
+# Local environment and secrets
+.env
+.env.*
+appsettings.Development.json
+appsettings.Local.json
+
+# Node tooling (if used by frontend assets)
+node_modules/
+
+# OS files
+.DS_Store
+Thumbs.db

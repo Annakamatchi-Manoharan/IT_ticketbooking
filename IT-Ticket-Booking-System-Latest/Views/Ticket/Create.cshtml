@@ -1,0 +1,85 @@
+@model ITBookingSystem.ViewModels.TicketCreateVm
+@using ITBookingSystem.Models
+@{
+    ViewData["Title"] = "Create New Ticket";
+}
+
+<div class="glass p-6">
+    <div class="text-lg font-semibold">Ticket Details</div>
+    <div class="text-sm text-slate-400">Provide detailed information. TeamViewer credentials are encrypted at rest.</div>
+
+    <form class="mt-6 space-y-5" asp-controller="Ticket" asp-action="Create" method="post" enctype="multipart/form-data">
+        @Html.AntiForgeryToken()
+        <div asp-validation-summary="All" class="text-sm text-rose-300"></div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <div>
+                <label class="text-sm text-slate-300">Title (optional)</label>
+                <input class="input-dark mt-2" asp-for="Ticket.Title" placeholder="Auto-generated if left blank" />
+                <span class="text-xs text-rose-300" asp-validation-for="Ticket.Title"></span>
+            </div>
+            <div>
+                <label class="text-sm text-slate-300">Problem Type</label>
+                <select class="input-dark mt-2" asp-for="Ticket.ProblemType" asp-items="Html.GetEnumSelectList<ProblemType>()"></select>
+                <span class="text-xs text-rose-300" asp-validation-for="Ticket.ProblemType"></span>
+            </div>
+        </div>
+
+        <div>
+            <label class="text-sm text-slate-300">Description</label>
+            <textarea class="input-dark mt-2 h-40" asp-for="Ticket.Description" placeholder="Please describe the issue in detail..."></textarea>
+            <span class="text-xs text-rose-300" asp-validation-for="Ticket.Description"></span>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <div>
+                <label class="text-sm text-slate-300">Priority</label>
+                <select class="input-dark mt-2" asp-for="Ticket.Priority" asp-items="Html.GetEnumSelectList<TicketPriority>()"></select>
+                <span class="text-xs text-rose-300" asp-validation-for="Ticket.Priority"></span>
+            </div>
+            <div>
+                <label class="text-sm text-slate-300">Work location</label>
+                <select class="input-dark mt-2" asp-for="Ticket.WorkLocation" asp-items="Html.GetEnumSelectList<WorkLocation>()"></select>
+                <span class="text-xs text-rose-300" asp-validation-for="Ticket.WorkLocation"></span>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <div>
+                <label class="text-sm text-slate-300">TeamViewer ID</label>
+                <input class="input-dark mt-2" asp-for="Ticket.TeamViewerId" placeholder="Optional" />
+            </div>
+            <div>
+                <label class="text-sm text-slate-300">TeamViewer password</label>
+                <input type="password" class="input-dark mt-2" asp-for="Ticket.TeamViewerPassword" placeholder="Stored encrypted" autocomplete="new-password" />
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <div>
+                <label class="text-sm text-slate-300">Contact number</label>
+                <input class="input-dark mt-2" asp-for="Ticket.ContactNumber" placeholder="Best callback number" />
+            </div>
+            <div>
+                <label class="text-sm text-slate-300">Email</label>
+                <input class="input-dark mt-2" asp-for="Ticket.Email" placeholder="name@company.com" />
+                <span class="text-xs text-rose-300" asp-validation-for="Ticket.Email"></span>
+            </div>
+        </div>
+
+        <div>
+            <label class="text-sm text-slate-300">Attachments</label>
+            <input class="input-dark mt-2 file:mr-3 file:rounded-lg file:border-0 file:bg-sky-500/20 file:px-3 file:py-2 file:text-sm" type="file" name="Attachments" multiple />
+            <div class="text-xs text-slate-500 mt-1">PDF, images, txt, log, zip — max 10 MB each.</div>
+        </div>
+
+        <div class="pt-2 flex items-center gap-3">
+            <button class="btn-primary-dark" type="submit">Submit Ticket</button>
+            <a class="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm hover:bg-white/10" asp-controller="Ticket" asp-action="MyTickets">Cancel</a>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

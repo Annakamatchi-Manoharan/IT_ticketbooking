@@ -1,0 +1,340 @@
+@model ITBookingSystem.ViewModels.AssignedTicketsVm
+@using ITBookingSystem.Models
+@{
+    ViewData["Title"] = "Assigned Tickets";
+    var tickets = Model.PagedTickets.Items ?? new List<ITBookingSystem.DTOs.TicketListItemDto>();
+    var tp = Model.PagedTickets;
+    var totalPages = (int)Math.Ceiling(tp.TotalCount / (double)Math.Max(1, tp.PageSize));
+    var focus = (ViewBag.Focus as string) ?? "";
+}
+
+<div class="space-y-6">
+    @if (TempData["Success"] is string success)
+    {
+        <div class="hidden" id="engineer-success" data-message="@success"></div>
+    }
+    @if (TempData["Error"] is string error)
+    {
+        <div class="hidden" id="engineer-error" data-message="@error"></div>
+    }
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-6 gap-4">
+        <div class="glass p-4 hover:bg-white/5 transition">
+            <div class="text-xs text-slate-400">Assigned Tickets</div>
+            <div class="mt-2 text-3xl font-semibold text-sky-200">@Model.ActiveTickets</div>
+        </div>
+        <div class="glass p-4 hover:bg-white/5 transition">
+            <div class="text-xs text-slate-400">Open Tickets</div>
+            <div class="mt-2 text-3xl font-semibold text-amber-200">@Model.OpenTickets</div>
+        </div>
+        <div class="glass p-4 hover:bg-white/5 transition">
+            <div class="text-xs text-slate-400">In Progress</div>
+            <div class="mt-2 text-3xl font-semibold text-indigo-200">@Model.InProgressTickets</div>
+        </div>
+        <div class="glass p-4 hover:bg-white/5 transition">
+            <div class="text-xs text-slate-400">Resolved Today</div>
+            <div class="mt-2 text-3xl font-semibold text-emerald-200">@Model.ResolvedToday</div>
+        </div>
+        <div class="glass p-4 border-rose-500/15 hover:bg-white/5 transition">
+            <div class="text-xs text-slate-400">SLA Breaches</div>
+            <div class="mt-2 text-3xl font-semibold text-rose-300">@Model.SlaBreaches</div>
+        </div>
+        <div class="glass p-4 hover:bg-white/5 transition">
+            <div class="text-xs text-slate-400">Avg Resolution Time</div>
+            <div class="mt-2 text-3xl font-semibold text-emerald-200">
+                @(Model.AvgResolutionHours is double h ? h.ToString("0.0") : "—")
+            </div>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 gap-4">
+        <div class="glass p-4">
+            <div class="flex flex-wrap items-center justify-between gap-3 mb-3">
+                <div class="text-sm font-semibold">Engineer Availability</div>
+                <form method="post" asp-action="SetAvailability" class="flex items-center gap-2">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="mode" value="@(Model.IsOnline ? "offline" : "online")" />
+                    <span class="inline-flex items-center gap-2 rounded-full border border-white/10 px-3 py-1.5 text-xs">
+                        <span class="h-2.5 w-2.5 rounded-full @(Model.IsOnline ? "bg-emerald-400 shadow-[0_0_10px_rgba(52,211,153,0.8)]" : "bg-slate-500")"></span>
+                        @(Model.IsOnline ? "Online" : "Offline")
+                    </span>
+                    <button type="submit" class="rounded-xl border border-sky-400/30 bg-sky-500/10 px-4 py-2 text-xs text-sky-100 hover:bg-sky-500/20 transition">
+                        @(Model.IsOnline ? "Go Offline" : "Go Online")
+                    </button>
+                </form>
+            </div>
+            <div class="grid grid-cols-2 md:grid-cols-3 gap-3 text-sm">
+                <div class="rounded-xl border border-white/10 bg-white/5 p-3">
+                    <div class="text-slate-400 text-xs">SLA Compliance</div>
+                    <div class="text-lg font-semibold text-sky-200">@Model.SlaCompliancePercent.ToString("0.0")%</div>
+                </div>
+                <div class="rounded-xl border border-white/10 bg-white/5 p-3">
+                    <div class="text-slate-400 text-xs">Avg Resolution</div>
+                    <div class="text-lg font-semibold text-emerald-200">@(Model.AvgResolutionHours?.ToString("0.0") ?? "—") h</div>
+                </div>
+                <div class="rounded-xl border border-white/10 bg-white/5 p-3">
+                    <div class="text-slate-400 text-xs">SLA Alerts</div>
+                    <div class="text-lg font-semibold text-rose-300">@Model.SlaBreaches</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="glass p-6" id="recent-tickets">
+        <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-4">
+            <div>
+                <div class="text-lg font-semibold">Active Queue</div>
+                <div class="text-sm text-slate-400">Actionable tickets only (Open, In Progress, Escalated).</div>
+            </div>
+        </div>
+
+        <form method="get" asp-action="Assigned" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-6 gap-3 mb-4">
+            <input class="input-dark" type="text" name="q" value="@Model.Query" placeholder="Search Ticket ID / text" />
+            <select class="input-dark" name="priority">
+                <option value="">Priority</option>
+                @foreach (var p in Enum.GetValues<TicketPriority>())
+                {
+                    <option value="@p" selected="@(Model.Priority == p)">@p</option>
+                }
+            </select>
+            <select class="input-dark" name="problemType">
+                <option value="">Problem Type</option>
+                @foreach (var p in Enum.GetValues<ProblemType>())
+                {
+                    <option value="@p" selected="@(Model.ProblemType == p)">@p</option>
+                }
+            </select>
+            <select class="input-dark" name="slaStatus">
+                <option value="">SLA Status</option>
+                <option value="safe" selected="@(Model.SlaStatus == "safe")">Safe</option>
+                <option value="warning" selected="@(Model.SlaStatus == "warning")">Near Deadline</option>
+                <option value="overdue" selected="@(Model.SlaStatus == "overdue")">Overdue</option>
+            </select>
+            <input class="input-dark" type="date" name="fromDate" value="@(Model.FromDate?.ToString("yyyy-MM-dd"))" />
+            <input class="input-dark" type="date" name="toDate" value="@(Model.ToDate?.ToString("yyyy-MM-dd"))" />
+            <div class="xl:col-span-6 flex items-center gap-2">
+                <button class="rounded-xl border border-sky-400/30 bg-sky-500/10 px-4 py-2 text-sm text-sky-100" type="submit">Apply Filters</button>
+                <a class="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm text-slate-200" asp-action="Assigned">Clear</a>
+            </div>
+        </form>
+
+        <div class="overflow-x-auto">
+        <table class="w-full text-sm min-w-[980px]">
+            <thead class="text-xs text-slate-400">
+                <tr class="border-b border-white/10">
+                    <th class="py-3 text-left">Ticket ID</th>
+                    <th class="py-3 text-left">Requester</th>
+                    <th class="py-3 text-left">Priority</th>
+                    <th class="py-3 text-left">Problem Type</th>
+                    <th class="py-3 text-left">Description</th>
+                    <th class="py-3 text-left">SLA</th>
+                    <th class="py-3 text-left">Assigned Time</th>
+                    <th class="py-3 text-left">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+            @foreach (var t in tickets)
+            {
+                var rowClass = t.IsOverdue && t.Status != TicketStatus.Resolved ? "bg-rose-500/5" : "";
+                <tr class="border-b border-white/5 @rowClass">
+                    <td class="py-3 font-semibold">
+                        <button type="button" class="ticket-details text-sky-300 hover:text-sky-200" data-ticket-id="@t.Id">#INC-@t.Id</button>
+                    </td>
+                    <td class="py-3">@(t.RequesterName ?? "—")</td>
+                    <td class="py-3">
+                        <span class="px-2 py-1 rounded-lg border border-white/10 bg-white/5 whitespace-nowrap">@t.Priority</span>
+                    </td>
+                    <td class="py-3">@t.ProblemType</td>
+                    <td class="py-3">
+                        <div class="max-w-[270px] overflow-hidden whitespace-nowrap text-ellipsis" title="@t.Description">@t.Description</div>
+                    </td>
+                    <td class="py-3">
+                        @if (t.IsOverdue)
+                        {
+                            <span class="rounded-lg px-2 py-1 bg-rose-500/20 text-rose-200">Overdue</span>
+                        }
+                        else
+                        {
+                            var warn = t.SLADeadline <= DateTime.UtcNow.AddHours(4);
+                            var cls = warn ? "bg-amber-500/20 text-amber-200" : "bg-emerald-500/20 text-emerald-200";
+                            <span class="sla-countdown rounded-lg px-2 py-1 @cls whitespace-nowrap" data-deadline="@t.SLADeadline.ToString("o")">Due @t.SLADeadline.ToLocalTime().ToString("g")</span>
+                        }
+                    </td>
+                    <td class="py-3 whitespace-nowrap">@t.CreatedAt.ToLocalTime().ToString("g")</td>
+                    <td class="py-3">
+                        <div class="flex flex-wrap items-center gap-2">
+                            <button type="button"
+                                    class="open-update rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm hover:bg-white/10 w-[110px]"
+                                    data-id="@t.Id"
+                                    data-status="@t.Status">
+                                Resolve
+                            </button>
+                            <a asp-action="Details" asp-route-id="@t.Id" class="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm hover:bg-white/10 w-[110px] text-center">View</a>
+                        </div>
+                    </td>
+                </tr>
+            }
+            </tbody>
+        </table>
+        </div>
+
+        @if (tickets.Count == 0)
+        {
+            <div class="mt-6 text-slate-400">No actionable tickets in queue.</div>
+        }
+
+        @if (totalPages > 1)
+        {
+            <div class="mt-6 flex flex-wrap items-center gap-2 text-sm">
+                @for (var p = 1; p <= totalPages; p++)
+                {
+                    <a class="rounded-lg border px-3 py-1 @(p == tp.Page ? "border-sky-400 bg-sky-500/10" : "border-white/10 bg-white/5")"
+                       asp-action="Assigned"
+                       asp-route-page="@p"
+                       asp-route-pageSize="@tp.PageSize"
+                       asp-route-priority="@Model.Priority"
+                       asp-route-problemType="@Model.ProblemType"
+                       asp-route-slaStatus="@Model.SlaStatus"
+                       asp-route-fromDate="@Model.FromDate?.ToString("yyyy-MM-dd")"
+                       asp-route-toDate="@Model.ToDate?.ToString("yyyy-MM-dd")"
+                       asp-route-q="@Model.Query">@p</a>
+                }
+            </div>
+        }
+    </div>
+
+    <div class="glass p-6">
+        <div class="text-lg font-semibold mb-4">Resolved Tickets</div>
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm min-w-[760px]">
+                <thead class="text-xs text-slate-400">
+                <tr class="border-b border-white/10">
+                    <th class="py-3 text-left">Ticket ID</th>
+                    <th class="py-3 text-left">User Name</th>
+                    <th class="py-3 text-left">Priority</th>
+                    <th class="py-3 text-left">Final Comment</th>
+                    <th class="py-3 text-left">Resolved Time</th>
+                </tr>
+                </thead>
+                <tbody>
+                @foreach (var t in Model.ResolvedTickets)
+                {
+                    <tr class="border-b border-white/5">
+                        <td class="py-3 font-semibold text-slate-200">#INC-@t.Id</td>
+                        <td class="py-3">@t.RequesterName</td>
+                        <td class="py-3">@t.Priority</td>
+                        <td class="py-3 max-w-[360px] overflow-hidden whitespace-nowrap text-ellipsis" title="@t.FinalComment">@t.FinalComment</td>
+                        <td class="py-3 whitespace-nowrap">@t.ResolvedAt.ToLocalTime().ToString("g")</td>
+                    </tr>
+                }
+                @if (Model.ResolvedTickets.Count == 0)
+                {
+                    <tr><td colspan="5" class="py-6 text-center text-slate-400">No resolved tickets yet.</td></tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div id="updateModal" class="fixed inset-0 z-50 hidden bg-black/60 p-4">
+    <div class="mx-auto mt-10 w-full max-w-lg rounded-2xl border border-white/10 bg-slate-900 p-5">
+        <div class="text-lg font-semibold mb-4">Resolve Ticket</div>
+        <form asp-action="EngineerUpdate" method="post" class="space-y-4">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="id" id="updateTicketId" />
+            <input type="hidden" name="status" value="resolved" />
+            <div>
+                <label class="text-xs text-slate-400 block mb-1">Resolution comment</label>
+                <textarea class="input-dark min-h-[110px]" name="comment" placeholder="Write final resolution..." required></textarea>
+            </div>
+            <div class="flex items-center justify-end gap-2">
+                <button type="button" id="closeUpdateModal" class="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm">Cancel</button>
+                <button type="submit" class="rounded-xl border border-sky-400/30 bg-sky-500/10 px-4 py-2 text-sm text-sky-100">Save</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div id="detailsModal" class="fixed inset-0 z-50 hidden bg-black/60 p-4">
+    <div class="mx-auto mt-8 w-full max-w-4xl rounded-2xl border border-white/10 bg-slate-900 p-5 max-h-[88vh] overflow-y-auto">
+        <div class="flex items-center justify-between gap-3 mb-4">
+            <div class="text-lg font-semibold">Ticket Details</div>
+            <button type="button" id="closeDetailsModal" class="rounded-xl border border-white/10 bg-white/5 px-3 py-1.5 text-sm">Close</button>
+        </div>
+        <div id="detailsContent" class="text-sm text-slate-200">Loading...</div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/sla-countdown.js" asp-append-version="true"></script>
+    <script>
+        (function () {
+            const updateModal = document.getElementById("updateModal");
+            const detailsModal = document.getElementById("detailsModal");
+            const updateTicketId = document.getElementById("updateTicketId");
+            const detailsContent = document.getElementById("detailsContent");
+
+            function openUpdateModal(id) {
+                updateTicketId.value = id;
+                updateModal.classList.remove("hidden");
+            }
+
+            document.querySelectorAll(".open-update").forEach(btn => {
+                btn.addEventListener("click", function () {
+                    openUpdateModal(this.dataset.id);
+                });
+            });
+            document.getElementById("closeUpdateModal").addEventListener("click", () => updateModal.classList.add("hidden"));
+
+            async function openDetails(ticketId) {
+                detailsModal.classList.remove("hidden");
+                detailsContent.textContent = "Loading...";
+                try {
+                    const r = await fetch(`/Ticket/AssignedTicketDetails/${ticketId}`);
+                    if (!r.ok) throw new Error("Failed");
+                    const d = await r.json();
+                    const attachments = (d.attachments || []).map(a => `<a class="text-sky-300 hover:underline" href="${a}" target="_blank" rel="noopener">Attachment</a>`).join("<br/>") || "None";
+                    const comments = (d.comments || []).map(c => `<div class="rounded-xl border border-white/10 bg-white/5 p-3"><div class="text-xs text-slate-400">${c.user} • ${new Date(c.createdAt).toLocaleString()}</div><div class="mt-1">${c.message}</div></div>`).join("") || "<div class='text-slate-400'>No comments</div>";
+                    const timeline = (d.timeline || []).map(t => `<div class="rounded-xl border border-white/10 bg-white/5 p-3"><div class="text-xs text-slate-400">${t.actor} • ${new Date(t.createdAtUtc).toLocaleString()} • ${t.action}</div><div class="mt-1">${t.details}</div></div>`).join("") || "<div class='text-slate-400'>No timeline events</div>";
+                    detailsContent.innerHTML = `
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div><div class="text-xs text-slate-400">Ticket</div><div class="font-semibold">#INC-${d.id} ${d.title}</div></div>
+                            <div><div class="text-xs text-slate-400">Requester</div><div>${d.requesterName ?? "—"} (${d.requesterEmail ?? "—"})</div></div>
+                            <div><div class="text-xs text-slate-400">Priority / Type</div><div>${d.priority} / ${d.problemType}</div></div>
+                            <div><div class="text-xs text-slate-400">SLA</div><div>${new Date(d.slaDeadline).toLocaleString()} ${d.isOverdue ? "(Overdue)" : ""}</div></div>
+                        </div>
+                        <div class="mt-4"><div class="text-xs text-slate-400">Description</div><div class="mt-1 rounded-xl border border-white/10 bg-white/5 p-3 whitespace-pre-wrap">${d.description ?? ""}</div></div>
+                        <div class="mt-4"><div class="text-xs text-slate-400">Attachments</div><div class="mt-1">${attachments}</div></div>
+                        <div class="mt-4"><div class="text-sm font-semibold mb-2">Engineer Comments</div><div class="space-y-2">${comments}</div></div>
+                        <div class="mt-4"><div class="text-sm font-semibold mb-2">Timeline & History</div><div class="space-y-2">${timeline}</div></div>
+                    `;
+                } catch {
+                    detailsContent.innerHTML = "<div class='text-rose-300'>Unable to load ticket details.</div>";
+                }
+            }
+
+            document.querySelectorAll(".ticket-details").forEach(btn => {
+                btn.addEventListener("click", function () { openDetails(this.dataset.ticketId); });
+            });
+            document.getElementById("closeDetailsModal").addEventListener("click", () => detailsModal.classList.add("hidden"));
+
+            const s = document.getElementById("engineer-success")?.dataset.message;
+            const e = document.getElementById("engineer-error")?.dataset.message;
+            if (window.Swal && s) {
+                Swal.fire({ toast: true, position: "top-end", icon: "success", timer: 2500, showConfirmButton: false, title: s });
+            }
+            if (window.Swal && e) {
+                Swal.fire({ toast: true, position: "top-end", icon: "error", timer: 3200, showConfirmButton: false, title: e });
+            }
+
+            const focus = '@focus';
+            if (focus === 'recent') {
+                const recent = document.getElementById('recent-tickets');
+                if (recent) {
+                    recent.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            }
+        })();
+    </script>
+}

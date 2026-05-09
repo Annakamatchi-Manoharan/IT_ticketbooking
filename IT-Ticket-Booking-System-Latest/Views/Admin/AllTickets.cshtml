@@ -1,0 +1,86 @@
+@model List<ITBookingSystem.Models.Ticket>
+@using ITBookingSystem.Models
+@{
+    ViewData["Title"] = "All Tickets";
+    TicketStatus? status = ViewBag.Status;
+    TicketPriority? priority = ViewBag.Priority;
+    string? q = ViewBag.Query;
+    DateTime? fromDate = ViewBag.FromDate;
+    DateTime? toDate = ViewBag.ToDate;
+}
+
+<div class="glass p-6 space-y-5">
+    <div>
+        <div class="text-lg font-semibold">All Tickets</div>
+        <div class="text-sm text-slate-400">Visualize and filter all tickets across users and engineers.</div>
+    </div>
+
+    <form class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-6 gap-3" method="get">
+        <input class="input-dark" name="q" value="@q" placeholder="Search Ticket ID / title / description" />
+        <select class="input-dark" name="status">
+            <option value="">All Status</option>
+            @foreach (var s in Enum.GetValues<TicketStatus>())
+            {
+                <option value="@s" selected="@(status == s)">@s</option>
+            }
+        </select>
+        <select class="input-dark" name="priority">
+            <option value="">All Priority</option>
+            @foreach (var p in Enum.GetValues<TicketPriority>())
+            {
+                <option value="@p" selected="@(priority == p)">@p</option>
+            }
+        </select>
+        <input class="input-dark" type="date" name="fromDate" value="@(fromDate?.ToString("yyyy-MM-dd"))" />
+        <input class="input-dark" type="date" name="toDate" value="@(toDate?.ToString("yyyy-MM-dd"))" />
+        <div class="flex items-center gap-2">
+            <button class="rounded-xl border border-sky-400/30 bg-sky-500/10 px-4 py-2 text-sm text-sky-100" type="submit">Apply</button>
+            <a class="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm" asp-action="AllTickets">Clear</a>
+        </div>
+    </form>
+
+    <div class="overflow-x-auto">
+        <table class="w-full text-sm min-w-[1050px]">
+            <thead class="text-xs text-slate-400">
+            <tr class="border-b border-white/10">
+                <th class="py-3 text-left">Ticket ID</th>
+                <th class="py-3 text-left">Title</th>
+                <th class="py-3 text-left">Requester</th>
+                <th class="py-3 text-left">Engineer</th>
+                <th class="py-3 text-left">Status</th>
+                <th class="py-3 text-left">Priority</th>
+                <th class="py-3 text-left">SLA</th>
+                <th class="py-3 text-left">Created</th>
+            </tr>
+            </thead>
+            <tbody>
+            @foreach (var t in Model)
+            {
+                <tr class="border-b border-white/5 @(t.IsOverdue && t.Status != TicketStatus.Resolved ? "bg-rose-500/5" : "")">
+                    <td class="py-3 font-semibold"><a class="text-sky-300 hover:text-sky-200" asp-controller="Ticket" asp-action="Details" asp-route-id="@t.Id">#INC-@t.Id</a></td>
+                    <td class="py-3 max-w-[260px] overflow-hidden whitespace-nowrap text-ellipsis" title="@t.Title">@t.Title</td>
+                    <td class="py-3">@(t.User?.Username ?? "—")</td>
+                    <td class="py-3">@(t.AssignedAgent?.Username ?? "Pending assignment")</td>
+                    <td class="py-3">@t.Status</td>
+                    <td class="py-3">@t.Priority</td>
+                    <td class="py-3">
+                        @if (t.IsOverdue && t.Status != TicketStatus.Resolved)
+                        {
+                            <span class="text-rose-300">Overdue</span>
+                        }
+                        else
+                        {
+                            <span class="text-slate-300">@t.SLADeadline.ToLocalTime().ToString("g")</span>
+                        }
+                    </td>
+                    <td class="py-3">@t.CreatedAt.ToLocalTime().ToString("g")</td>
+                </tr>
+            }
+            @if (Model.Count == 0)
+            {
+                <tr><td colspan="8" class="py-6 text-center text-slate-400">No tickets found for selected filters.</td></tr>
+            }
+            </tbody>
+        </table>
+    </div>
+</div>

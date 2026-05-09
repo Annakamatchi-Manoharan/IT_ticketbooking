@@ -1,0 +1,96 @@
+@using System.Security.Claims
+@using ITBookingSystem.Models
+@{
+    var role = User.FindFirstValue(ClaimTypes.Role) ?? "";
+    var roleDisplay = role switch
+    {
+        nameof(UserRole.User) => "User",
+        nameof(UserRole.Agent) => "Engineer",
+        nameof(UserRole.Admin) => "Admin",
+        _ => role
+    };
+    string dashboardController, dashboardAction;
+    if (role == nameof(UserRole.User))
+    {
+        dashboardController = "Ticket";
+        dashboardAction = "MyTickets";
+    }
+    else if (role == nameof(UserRole.Agent))
+    {
+        dashboardController = "Ticket";
+        dashboardAction = "Assigned";
+    }
+    else
+    {
+        dashboardController = "Dashboard";
+        dashboardAction = "Index";
+    }
+}
+
+<aside id="app-sidebar" class="fixed md:static inset-y-0 left-0 z-40 w-72 -translate-x-full md:translate-x-0 transition-transform duration-200 md:flex md:w-72 md:flex-col bg-slate-950 md:bg-transparent border-r border-white/10 md:border-0">
+    <div class="h-full md:h-screen md:sticky md:top-0 flex flex-col bg-slate-950/95 md:bg-slate-950/40 md:backdrop-blur border-r border-white/10">
+        <div class="px-5 py-5 flex items-center gap-3">
+            <div class="h-9 w-9 rounded-lg bg-sky-500/20 border border-sky-400/30 grid place-items-center">
+                <span class="font-bold text-sky-200">IT</span>
+            </div>
+            <div class="leading-tight">
+                <div class="text-sm font-semibold">Enterprise IT</div>
+                <div class="text-[11px] text-slate-400 tracking-wide">SUPPORT SUITE</div>
+            </div>
+            <button type="button" class="md:hidden ml-auto text-slate-300" data-close-sidebar aria-label="Close menu">✕</button>
+        </div>
+
+        <nav class="px-3 py-3 space-y-6 overflow-y-auto flex-1">
+            <div>
+                <div class="px-3 text-[11px] tracking-widest text-slate-500">MAIN</div>
+                <div class="mt-2 space-y-1">
+                    <a class="side-link" asp-controller="@dashboardController" asp-action="@dashboardAction">Dashboard</a>
+                    @if (role == nameof(UserRole.User))
+                    {
+                        <a class="side-link" asp-controller="Ticket" asp-action="Create">Create Ticket</a>
+                        <a class="side-link" asp-controller="Ticket" asp-action="MyTickets">My Tickets</a>
+                    }
+                    @if (role == nameof(UserRole.Admin))
+                    {
+                        <a class="side-link" asp-controller="Admin" asp-action="AllTickets">All Tickets</a>
+                    }
+                </div>
+            </div>
+
+            <div>
+                <div class="mt-2 space-y-1">
+                    @if (role == nameof(UserRole.Agent))
+                    {
+                        <a class="side-link" asp-controller="Ticket" asp-action="Assigned">Assigned Tickets</a>
+                    }
+                </div>
+            </div>
+
+            <div>
+                <div class="mt-2 space-y-1">
+                    @if (role == nameof(UserRole.Admin))
+                    {
+                        <a class="side-link" asp-controller="Admin" asp-action="Users">User Management</a>
+                        <a class="side-link" asp-controller="Admin" asp-action="ReassignTickets">Reassign Tickets</a>
+                        <a class="side-link" asp-controller="Admin" asp-action="ExportTicketLog">Export Logs</a>
+                    }
+                </div>
+            </div>
+        </nav>
+
+        <div class="mt-auto px-5 py-4 border-t border-white/10 flex items-center gap-3">
+            <div class="h-10 w-10 rounded-full bg-white/10 grid place-items-center text-slate-200">
+                @(User.Identity?.Name?.FirstOrDefault().ToString().ToUpperInvariant() ?? "U")
+            </div>
+            <div class="min-w-0">
+                <div class="text-sm font-semibold truncate">@User.Identity?.Name</div>
+                <div class="text-[11px] text-slate-400 truncate">@roleDisplay</div>
+            </div>
+            <form class="ml-auto" asp-controller="Auth" asp-action="Logout" method="post">
+                @Html.AntiForgeryToken()
+                <button class="text-slate-400 hover:text-slate-200 text-sm" type="submit" title="Sign out">⎋</button>
+            </form>
+        </div>
+    </div>
+</aside>
+<div id="sidebar-overlay" class="fixed inset-0 z-30 bg-black/50 hidden md:hidden" data-close-sidebar></div>

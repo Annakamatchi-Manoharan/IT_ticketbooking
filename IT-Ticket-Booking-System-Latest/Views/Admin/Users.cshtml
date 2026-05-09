@@ -1,0 +1,139 @@
+@model ITBookingSystem.ViewModels.UserEditVm
+@using ITBookingSystem.Models
+@{
+    ViewData["Title"] = "User Management";
+    var users = (List<User>)ViewBag.Users;
+}
+
+<div class="space-y-6">
+    <div class="glass p-6">
+        <div class="flex items-center justify-between">
+            <div>
+                <div class="text-lg font-semibold">User directory</div>
+                <div class="text-sm text-slate-400">Create accounts, edit profiles, and control access.</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="glass p-6 overflow-x-auto">
+        <table class="w-full text-sm">
+            <thead class="text-xs text-slate-400">
+                <tr class="border-b border-white/10">
+                    <th class="py-3 text-left">Name</th>
+                    <th class="py-3 text-left">Email</th>
+                    <th class="py-3 text-left">Role</th>
+                    <th class="py-3 text-left">Department</th>
+                    <th class="py-3 text-left">Status</th>
+                    <th class="py-3 text-left">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+            @foreach (var u in users)
+            {
+                var statusLabel = u.IsActive ? "Active" : "Inactive";
+                var statusCls = u.IsActive ? "text-emerald-300" : "text-rose-300";
+                <tr class="border-b border-white/5">
+                    <td class="py-3 font-medium">@u.Username</td>
+                    <td class="py-3 text-slate-300">@u.Email</td>
+                    <td class="py-3">
+                        <span class="px-2 py-1 rounded-lg border border-white/10 bg-white/5">
+                            @(u.Role switch
+                            {
+                                UserRole.User => "User",
+                                UserRole.Agent => "Engineer",
+                                UserRole.Admin => "Admin",
+                                _ => u.Role.ToString()
+                            })
+                        </span>
+                    </td>
+                    <td class="py-3 text-slate-300">@(u.Department ?? "—")</td>
+                    <td class="py-3">
+                        <span class="text-xs @statusCls">@statusLabel</span>
+                        @if (u.Role == UserRole.Agent)
+                        {
+                            <span class="text-[11px] text-slate-500 block">Avail: @(u.IsAvailable ? "yes" : "no") · Load: @u.ActiveTicketCount</span>
+                        }
+                    </td>
+                    <td class="py-3">
+                        <div class="flex flex-wrap items-center gap-2">
+                            <a class="inline-flex items-center justify-center gap-1 min-w-[92px] rounded-lg border border-sky-400/30 bg-sky-500/10 px-3 py-1.5 text-sky-200 hover:bg-sky-500/20"
+                               asp-action="Users" asp-route-edit="@u.Id">
+                                <span>✏</span><span>Edit</span>
+                            </a>
+                            <form asp-controller="Admin" asp-action="DeleteUser" method="post" class="inline">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="id" value="@u.Id" />
+                                <button class="inline-flex items-center justify-center gap-1 min-w-[92px] rounded-lg border border-rose-400/30 bg-rose-500/10 px-3 py-1.5 text-rose-200 hover:bg-rose-500/20"
+                                        type="submit" onclick="return confirm('Delete this user?');">
+                                    <span>🗑</span><span>Delete</span>
+                                </button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+
+    <div class="glass p-6">
+        <div class="text-sm font-semibold">@(Model.Id is null ? "Create user" : "Update user")</div>
+        <form class="mt-4 grid grid-cols-1 lg:grid-cols-3 gap-4" asp-controller="Admin" asp-action="UpsertUser" method="post">
+            @Html.AntiForgeryToken()
+            <input type="hidden" asp-for="Id" />
+            <div>
+                <label class="text-sm text-slate-300">Full name</label>
+                <input class="input-dark mt-2" asp-for="Username" placeholder="e.g., John Doe" />
+                <span class="text-xs text-rose-300" asp-validation-for="Username"></span>
+            </div>
+            <div>
+                <label class="text-sm text-slate-300">Email</label>
+                <input class="input-dark mt-2" asp-for="Email" placeholder="john@company.com" />
+                <span class="text-xs text-rose-300" asp-validation-for="Email"></span>
+            </div>
+            <div>
+                <label class="text-sm text-slate-300">Password @(Model.Id is null ? "(required for new)" : "(optional)")</label>
+                <input class="input-dark mt-2" asp-for="Password" type="password" placeholder="Set / rotate password" />
+            </div>
+            <div>
+                <label class="text-sm text-slate-300">Role</label>
+                <select class="input-dark mt-2" asp-for="Role" asp-items="Html.GetEnumSelectList<UserRole>()"></select>
+            </div>
+            <div>
+                <label class="text-sm text-slate-300">Department</label>
+                <input class="input-dark mt-2" asp-for="Department" placeholder="e.g., IT Operations" />
+            </div>
+            <div>
+                <label class="text-sm text-slate-300">Contact number</label>
+                <input class="input-dark mt-2" asp-for="ContactNumber" placeholder="+1-555-0100" />
+            </div>
+            <div>
+                <label class="text-sm text-slate-300">Skill (agents)</label>
+                <select class="input-dark mt-2" asp-for="Skill" asp-items="Html.GetEnumSelectList<AgentSkill>()">
+                    <option value="">None</option>
+                </select>
+            </div>
+            <div class="flex flex-wrap items-end gap-6">
+                <label class="flex items-center gap-2 text-sm text-slate-300">
+                    <input class="h-4 w-4 rounded border-white/20 bg-white/10" asp-for="IsAvailable" />
+                    Agent available
+                </label>
+                <label class="flex items-center gap-2 text-sm text-slate-300">
+                    <input class="h-4 w-4 rounded border-white/20 bg-white/10" asp-for="IsSeniorAgent" />
+                    Senior agent (escalations)
+                </label>
+                <label class="flex items-center gap-2 text-sm text-slate-300">
+                    <input class="h-4 w-4 rounded border-white/20 bg-white/10" asp-for="IsActive" />
+                    Account active
+                </label>
+            </div>
+            <div class="lg:col-span-3 flex justify-end">
+                <button class="btn-primary-dark" type="submit">Save user</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

@@ -1,0 +1,101 @@
+@model ITBookingSystem.DTOs.LoginDto
+@{
+    Layout = null;
+    ViewData["Title"] = "Sign In";
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - ITBookingSystem</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+</head>
+<body class="min-h-screen bg-slate-950 text-slate-900">
+    <div class="min-h-screen grid grid-cols-1 lg:grid-cols-2">
+        <div class="hidden lg:flex items-center justify-center bg-gradient-to-br from-sky-500 to-cyan-500 text-white p-12">
+            <div class="max-w-lg">
+                <div class="flex items-center gap-3 mb-8">
+                    <div class="h-12 w-12 rounded-2xl bg-white/15 border border-white/25 grid place-items-center font-bold">IT</div>
+                    <div>
+                        <div class="text-xl font-semibold">Zenith IT</div>
+                        <div class="text-white/70 text-sm">Support Platform</div>
+                    </div>
+                </div>
+                <h1 class="text-5xl font-bold leading-tight">Empowering your IT workflow</h1>
+                <p class="mt-5 text-white/85">
+                    The unified platform for enterprise technology management and seamless ticket resolution.
+                    Secure, scalable, and built for modern teams.
+                </p>
+                <div class="mt-10 grid grid-cols-2 gap-8 text-white/85">
+                    <div>
+                        <div class="text-3xl font-bold">99.9%</div>
+                        <div class="text-xs tracking-widest text-white/70">UPTIME</div>
+                    </div>
+                    <div>
+                        <div class="text-3xl font-bold">24/7</div>
+                        <div class="text-xs tracking-widest text-white/70">SUPPORT</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="flex items-center justify-center p-6 lg:p-12 bg-slate-50">
+            <div class="w-full max-w-md">
+                <h2 class="text-3xl font-semibold text-slate-900">Sign In</h2>
+                <p class="mt-1 text-sm text-slate-500">Enter your credentials to access your dashboard.</p>
+                @if (TempData["Success"] is string msg)
+                {
+                    <div class="mt-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">@msg</div>
+                }
+
+                <form class="mt-8 space-y-4" asp-controller="Auth" asp-action="Login" method="post">
+                    @Html.AntiForgeryToken()
+                    <div asp-validation-summary="All" class="text-sm text-red-600"></div>
+
+                    <div>
+                        <label class="text-sm font-medium text-slate-700">Email Address</label>
+                        <input class="mt-2 w-full rounded-xl border border-slate-200 px-4 py-3 outline-none focus:ring-4 focus:ring-sky-100 focus:border-sky-300"
+                               asp-for="Email" placeholder="e.g., name@company.com" />
+                        <span class="text-xs text-red-600" asp-validation-for="Email"></span>
+                    </div>
+
+                    <div>
+                        <div class="flex items-center justify-between">
+                            <label class="text-sm font-medium text-slate-700">Password</label>
+                            <a class="text-sm text-sky-600 hover:text-sky-700" asp-controller="Auth" asp-action="Register">Need an account?</a>
+                        </div>
+                        <input type="password"
+                               class="mt-2 w-full rounded-xl border border-slate-200 px-4 py-3 outline-none focus:ring-4 focus:ring-sky-100 focus:border-sky-300"
+                               asp-for="Password" placeholder="••••••••" />
+                        <span class="text-xs text-red-600" asp-validation-for="Password"></span>
+                    </div>
+
+                    <label class="flex items-center gap-2 text-sm text-slate-600">
+                        <input class="h-4 w-4 rounded border-slate-300 text-sky-600 focus:ring-sky-200" asp-for="RememberMe" />
+                        Remember this device
+                    </label>
+
+                    <button class="w-full rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-semibold py-3" type="submit">
+                        Login to Dashboard
+                    </button>
+
+                    <div class="pt-3 text-center text-sm text-slate-500">
+                        Don’t have an account?
+                        <a class="font-medium text-sky-600 hover:text-sky-700" asp-controller="Auth" asp-action="Register">Sign up</a>
+                    </div>
+                </form>
+                <div class="mt-8 text-center text-xs text-slate-400 space-x-4">
+                    <a asp-controller="Home" asp-action="Privacy" class="hover:text-slate-600">Privacy Policy</a>
+                    <a asp-controller="Home" asp-action="Privacy" class="hover:text-slate-600">Terms of Service</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <partial name="_ValidationScriptsPartial" />
+</body>
+</html>
+

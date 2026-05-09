@@ -1,0 +1,179 @@
+@model ITBookingSystem.Models.Ticket
+@using ITBookingSystem.Models
+@{
+    ViewData["Title"] = $"Ticket #{Model.Id}";
+    var paths = string.IsNullOrWhiteSpace(Model.AttachmentPaths)
+        ? Array.Empty<string>()
+        : Model.AttachmentPaths.Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+}
+
+<div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
+    <div class="xl:col-span-2 space-y-6">
+        <div class="glass p-6">
+            <div class="flex items-start justify-between gap-4">
+                <div class="min-w-0">
+                    <div class="text-sm text-slate-400">INC-@Model.Id</div>
+                    <div class="text-xl font-semibold truncate">@Model.Title</div>
+                    <div class="mt-2 text-sm text-slate-300 whitespace-pre-wrap">@Model.Description</div>
+                </div>
+                <div class="flex flex-col items-end gap-2">
+                    <span class="px-3 py-1 rounded-xl border border-white/10 bg-white/5 text-sm">@Model.Status</span>
+                    <span class="px-3 py-1 rounded-xl border border-white/10 bg-white/5 text-sm">@Model.Priority</span>
+                </div>
+            </div>
+
+            <div class="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                <div class="rounded-2xl border border-white/10 bg-white/5 p-4">
+                    <div class="text-xs text-slate-400">Problem Type</div>
+                    <div class="mt-1 font-semibold">@Model.ProblemType</div>
+                </div>
+                <div class="rounded-2xl border border-white/10 bg-white/5 p-4">
+                    <div class="text-xs text-slate-400">Work location</div>
+                    <div class="mt-1 font-semibold">@Model.WorkLocation</div>
+                </div>
+                <div class="rounded-2xl border border-white/10 bg-white/5 p-4">
+                    <div class="text-xs text-slate-400">Created</div>
+                    <div class="mt-1 font-semibold">@Model.CreatedAt.ToLocalTime().ToString("g")</div>
+                </div>
+                <div class="rounded-2xl border border-white/10 bg-white/5 p-4 md:col-span-3">
+                    <div class="text-xs text-slate-400">SLA</div>
+                    <div class="mt-1 font-semibold @(Model.IsOverdue ? "text-rose-300" : "text-amber-200")">
+                        @(Model.IsOverdue ? "Overdue / breached" : $"Due {Model.SLADeadline.ToLocalTime():g}")
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                <div class="rounded-2xl border border-white/10 bg-white/5 p-4">
+                    <div class="text-xs text-slate-400">TeamViewer ID</div>
+                    <div class="mt-1 font-semibold">@(Model.TeamViewerId ?? "—")</div>
+                </div>
+                <div class="rounded-2xl border border-white/10 bg-white/5 p-4">
+                    <div class="text-xs text-slate-400">TeamViewer password</div>
+                    <div class="mt-1 font-semibold text-slate-300">
+                        @(string.IsNullOrEmpty(Model.TeamViewerPasswordProtected) ? "—" : "Protected (encrypted at rest)")
+                    </div>
+                </div>
+                <div class="rounded-2xl border border-white/10 bg-white/5 p-4">
+                    <div class="text-xs text-slate-400">Contact</div>
+                    <div class="mt-1 font-semibold">@(Model.RequesterPhone ?? "—")</div>
+                </div>
+                <div class="rounded-2xl border border-white/10 bg-white/5 p-4">
+                    <div class="text-xs text-slate-400">Requester email</div>
+                    <div class="mt-1 font-semibold">@(Model.RequesterEmail ?? "—")</div>
+                </div>
+            </div>
+
+            @if (paths.Length > 0)
+            {
+                <div class="mt-6">
+                    <div class="text-sm font-semibold">Attachments</div>
+                    <ul class="mt-2 space-y-2 text-sm text-sky-200">
+                        @foreach (var p in paths)
+                        {
+                            <li><a class="hover:underline" href="@p" target="_blank" rel="noopener">@p</a></li>
+                        }
+                    </ul>
+                </div>
+            }
+        </div>
+
+        @{
+            var history = ViewBag.History as List<ITBookingSystem.Models.TicketHistory> ?? new();
+        }
+        <div class="glass p-6">
+            <div class="text-sm font-semibold">Audit history</div>
+            <div class="mt-4 space-y-3 max-h-72 overflow-y-auto pr-1 text-sm">
+                @foreach (var h in history)
+                {
+                    <div class="rounded-xl border border-white/10 bg-white/5 px-4 py-3">
+                        <div class="flex flex-wrap items-center justify-between gap-2">
+                            <span class="text-xs font-medium text-sky-200">@h.Action</span>
+                            <span class="text-[11px] text-slate-500">@h.CreatedAtUtc.ToLocalTime().ToString("g")</span>
+                        </div>
+                        <div class="mt-1 text-slate-300">@h.Details</div>
+                        @if (h.ActorUser is not null)
+                        {
+                            <div class="mt-1 text-[11px] text-slate-500">By @h.ActorUser.Username</div>
+                        }
+                    </div>
+                }
+                @if (history.Count == 0)
+                {
+                    <div class="text-slate-500">No history entries yet.</div>
+                }
+            </div>
+        </div>
+
+        <div class="glass p-6">
+            <div class="text-sm font-semibold">Comments</div>
+            <div class="mt-4 space-y-4 max-h-80 overflow-y-auto pr-1">
+                @foreach (var c in Model.Comments.OrderByDescending(x => x.CreatedAt))
+                {
+                    <div class="rounded-2xl border border-white/10 bg-white/5 p-4">
+                        <div class="flex items-center justify-between gap-3">
+                            <div class="text-xs text-slate-400">@c.User.Username</div>
+                            <div class="text-[11px] text-slate-500">@c.CreatedAt.ToLocalTime().ToString("g")</div>
+                        </div>
+                        <div class="mt-2 text-sm text-slate-200 whitespace-pre-wrap">@c.Message</div>
+                    </div>
+                }
+                @if (Model.Comments.Count == 0)
+                {
+                    <div class="text-sm text-slate-500">No comments yet.</div>
+                }
+            </div>
+
+            @if (!User.IsInRole("Agent"))
+            {
+                <form class="mt-4 space-y-3" asp-controller="Ticket" asp-action="AddComment" asp-route-id="@Model.Id" method="post">
+                    @Html.AntiForgeryToken()
+                    <label class="text-sm text-slate-300">Add comment</label>
+                    <textarea class="input-dark mt-1 h-24" name="message" placeholder="Share an update…" required maxlength="2000"></textarea>
+                    <button class="btn-primary-dark" type="submit">Post comment</button>
+                </form>
+            }
+        </div>
+    </div>
+
+    <div class="space-y-6">
+        <div class="glass p-6">
+            <div class="text-sm font-semibold">People</div>
+            <div class="mt-4 text-sm">
+                <div class="text-xs text-slate-400">Requested By</div>
+                <div class="mt-1 font-semibold">@Model.User.Username</div>
+                <div class="text-xs text-slate-400">@Model.User.Email</div>
+            </div>
+            <div class="mt-4 text-sm">
+                <div class="text-xs text-slate-400">Assigned Engineer</div>
+                <div class="mt-1 font-semibold">@((Model.AssignedAgent?.Username) ?? "Unassigned")</div>
+                <div class="text-xs text-slate-400">@Model.AssignedAgent?.Email</div>
+            </div>
+        </div>
+
+        @if (User.IsInRole("Admin"))
+        {
+            <div class="glass p-6">
+                <div class="text-sm font-semibold">Update Status</div>
+                <form class="mt-4 flex flex-col gap-2" asp-controller="Ticket" asp-action="UpdateStatus" method="post">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="id" value="@Model.Id" />
+                    <select class="input-dark !py-2 !px-3" name="status">
+                        @foreach (var s in Enum.GetValues<TicketStatus>())
+                        {
+                            if (Model.Status == s)
+                            {
+                                <option value="@s" selected>@s</option>
+                            }
+                            else
+                            {
+                                <option value="@s">@s</option>
+                            }
+                        }
+                    </select>
+                    <button class="btn-primary-dark" type="submit">Save</button>
+                </form>
+            </div>
+        }
+    </div>
+</div>

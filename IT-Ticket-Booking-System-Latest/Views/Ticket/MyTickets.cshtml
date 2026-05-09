@@ -1,0 +1,146 @@
+@model ITBookingSystem.DTOs.PagedResult<ITBookingSystem.DTOs.TicketListItemDto>
+@using ITBookingSystem.Models
+@{
+    ViewData["Title"] = "My Tickets";
+    TicketStatus? status = ViewBag.Status;
+    TicketPriority? priority = ViewBag.Priority;
+    string? q = ViewBag.Query;
+    var totalPages = (int)Math.Ceiling(Model.TotalCount / (double)Math.Max(1, Model.PageSize));
+}
+
+<div class="glass p-6">
+    <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+        <div>
+            <div class="text-lg font-semibold">My Tickets</div>
+            <div class="text-sm text-slate-400">Search, filter, and track SLA for your requests. Page @Model.Page of @Math.Max(1, totalPages).</div>
+        </div>
+        <div class="flex items-center gap-3">
+            <a class="btn-primary-dark" asp-controller="Ticket" asp-action="Create">Create Ticket</a>
+        </div>
+    </div>
+
+    <form class="mt-5 grid grid-cols-1 md:grid-cols-4 gap-3" method="get">
+        <input type="hidden" name="page" value="1" />
+        <input class="input-dark" name="q" value="@q" placeholder="Search title, description, or #ID" />
+        <select class="input-dark" name="status">
+            <option value="">All Status</option>
+            @foreach (var s in Enum.GetValues<TicketStatus>())
+            {
+                if (status == s)
+                {
+                    <option value="@s" selected>@s</option>
+                }
+                else
+                {
+                    <option value="@s">@s</option>
+                }
+            }
+        </select>
+        <select class="input-dark" name="priority">
+            <option value="">All Priority</option>
+            @foreach (var p in Enum.GetValues<TicketPriority>())
+            {
+                if (priority == p)
+                {
+                    <option value="@p" selected>@p</option>
+                }
+                else
+                {
+                    <option value="@p">@p</option>
+                }
+            }
+        </select>
+        <div class="flex items-center gap-2">
+            <button class="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm hover:bg-white/10" type="submit">Apply</button>
+            <a class="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm hover:bg-white/10" asp-action="MyTickets">Clear</a>
+        </div>
+    </form>
+
+    <div class="mt-6 overflow-x-auto">
+        <table class="w-full text-sm">
+            <thead class="text-xs text-slate-400">
+                <tr class="border-b border-white/10">
+                    <th class="py-3 text-left">Ticket ID</th>
+                    <th class="py-3 text-left">Title</th>
+                    <th class="py-3 text-left">Engineer</th>
+                    <th class="py-3 text-left">Status</th>
+                    <th class="py-3 text-left">Priority</th>
+                    <th class="py-3 text-left">SLA</th>
+                    <th class="py-3 text-left">Created</th>
+                </tr>
+            </thead>
+            <tbody>
+            @foreach (var t in Model.Items)
+            {
+                var statusCls = t.Status switch
+                {
+                    TicketStatus.Open => "border-sky-400/30 bg-sky-500/10 text-sky-100",
+                    TicketStatus.InProgress => "border-amber-400/30 bg-amber-500/10 text-amber-100",
+                    TicketStatus.Escalated => "border-rose-400/30 bg-rose-500/10 text-rose-100",
+                    TicketStatus.Resolved => "border-emerald-400/30 bg-emerald-500/10 text-emerald-100",
+                    _ => "border-white/10 bg-white/5"
+                };
+                <tr class="border-b border-white/5 @(t.IsOverdue && t.Status != TicketStatus.Resolved ? "bg-rose-500/5" : "")">
+                    <td class="py-3 font-semibold">
+                        <a class="text-sky-300 hover:text-sky-200" asp-controller="Ticket" asp-action="Details" asp-route-id="@t.Id">#INC-@t.Id</a>
+                    </td>
+                    <td class="py-3">
+                        <div class="font-medium">
+                            <a class="hover:text-slate-100" asp-controller="Ticket" asp-action="Details" asp-route-id="@t.Id">@t.Title</a>
+                        </div>
+                        <div class="text-xs text-slate-400">@t.ProblemType</div>
+                    </td>
+                    <td class="py-3">
+                        @if (!string.IsNullOrWhiteSpace(t.AssignedAgentName))
+                        {
+                            <span class="text-slate-200">@t.AssignedAgentName</span>
+                        }
+                        else
+                        {
+                            <span class="text-slate-400">Pending assignment</span>
+                        }
+                    </td>
+                    <td class="py-3">
+                        <span class="px-2 py-1 rounded-lg border @statusCls">@t.Status</span>
+                    </td>
+                    <td class="py-3">@t.Priority</td>
+                    <td class="py-3">
+                        @if (t.IsOverdue && t.Status != TicketStatus.Resolved)
+                        {
+                            <span class="text-rose-300 font-medium">Overdue</span>
+                        }
+                        else if (t.Status == TicketStatus.Resolved)
+                        {
+                            <span class="text-slate-400">—</span>
+                        }
+                        else
+                        {
+                            <span class="text-amber-200 sla-countdown" data-deadline="@t.SLADeadline.ToString("o")">Due @t.SLADeadline.ToLocalTime().ToString("g")</span>
+                        }
+                    </td>
+                    <td class="py-3 text-slate-300">@t.CreatedAt.ToLocalTime().ToString("g")</td>
+                </tr>
+            }
+            </tbody>
+        </table>
+        @if (Model.Items.Count == 0)
+        {
+            <div class="mt-6 text-slate-400">No tickets found.</div>
+        }
+    </div>
+
+    @if (totalPages > 1)
+    {
+        <div class="mt-6 flex flex-wrap items-center gap-2 text-sm">
+            @for (var p = 1; p <= totalPages; p++)
+            {
+                <a class="rounded-lg border px-3 py-1 @(p == Model.Page ? "border-sky-400 bg-sky-500/10" : "border-white/10 bg-white/5")"
+                   asp-action="MyTickets" asp-route-page="@p" asp-route-status="@status" asp-route-priority="@priority" asp-route-q="@q">@p</a>
+            }
+        </div>
+    }
+</div>
+
+@section Scripts {
+    <script src="~/js/sla-countdown.js" asp-append-version="true"></script>
+}

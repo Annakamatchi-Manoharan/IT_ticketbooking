@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - ITBookingSystem</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/ITBookingSystem.styles.css" asp-append-version="true" />
+</head>
+<body class="h-full bg-slate-950 text-slate-100">
+    <div class="min-h-screen bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-slate-900 via-slate-950 to-slate-950">
+        <div class="flex">
+            <partial name="_Sidebar" />
+
+            <div class="flex-1 min-w-0 md:pl-0">
+                <partial name="_Topbar" />
+                <main class="px-4 sm:px-6 py-6">
+                    @RenderBody()
+                </main>
+                <footer class="px-4 sm:px-6 pb-6 text-xs text-slate-400">
+                    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-t border-white/10 pt-4">
+                        <span>&copy; 2026 IT Booking System</span>
+                        <span class="flex flex-wrap gap-4">
+                            <a class="hover:text-slate-200" asp-controller="Home" asp-action="Index">System Status</a>
+                            <a class="hover:text-slate-200" asp-controller="Home" asp-action="Privacy">Privacy</a>
+                            <a class="hover:text-slate-200" asp-controller="Home" asp-action="Privacy">Terms</a>
+                        </span>
+                    </div>
+                </footer>
+            </div>
+        </div>
+    </div>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    @if (User.Identity?.IsAuthenticated == true)
+    {
+        <script src="https://cdn.jsdelivr.net/npm/@@microsoft/signalr@8.0.7/dist/browser/signalr.min.js"></script>
+        <script src="~/js/ticket-signalr.js" asp-append-version="true"></script>
+    }
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

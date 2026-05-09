@@ -1,0 +1,49 @@
+@model List<ITBookingSystem.Models.Ticket>
+@using ITBookingSystem.Models
+@{
+    ViewData["Title"] = "Reassign Tickets";
+    var agents = (List<User>)ViewBag.Agents;
+}
+
+<div class="glass p-6 overflow-x-auto">
+    <div class="text-lg font-semibold">Reassign Tickets</div>
+    <div class="text-sm text-slate-400">Override assignment for operational needs.</div>
+
+    <table class="w-full text-sm mt-6">
+        <thead class="text-xs text-slate-400">
+            <tr class="border-b border-white/10">
+                <th class="py-3 text-left">Id</th>
+                <th class="py-3 text-left">Title</th>
+                <th class="py-3 text-left">User</th>
+                <th class="py-3 text-left">Assigned Agent</th>
+                <th class="py-3 text-left">Action</th>
+            </tr>
+        </thead>
+        <tbody>
+        @foreach (var t in Model)
+        {
+            <tr class="border-b border-white/5">
+                <td class="py-3">#@t.Id</td>
+                <td class="py-3 font-medium">@t.Title</td>
+                <td class="py-3 text-slate-300">@t.User.Username</td>
+                <td class="py-3 text-slate-300">@(t.AssignedAgent?.Username ?? "Unassigned")</td>
+                <td class="py-3">
+                    <form class="flex items-center gap-2" asp-controller="Admin" asp-action="Reassign" method="post">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="ticketId" value="@t.Id" />
+                        <select class="input-dark !py-2 !px-3" name="agentId">
+                            <option value="">Unassigned</option>
+                            @foreach (var a in agents)
+                            {
+                                <option value="@a.Id" selected="@(t.AssignedAgentId == a.Id)">@a.Username (@a.Skill)</option>
+                            }
+                        </select>
+                        <button class="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm hover:bg-white/10" type="submit">Save</button>
+                    </form>
+                </td>
+            </tr>
+        }
+        </tbody>
+    </table>
+</div>
+

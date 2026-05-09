@@ -1,0 +1,213 @@
+@model ITBookingSystem.ViewModels.DashboardIndexVm
+@{
+    ViewData["Title"] = "System Overview";
+    var trendLabels = Model.TrendDaysUtc.Select(d => d.ToLocalTime().ToString("MMM dd")).ToList();
+    var trendJson = System.Text.Json.JsonSerializer.Serialize(Model.TicketsCreatedPerDay);
+    var labelsJson = System.Text.Json.JsonSerializer.Serialize(trendLabels);
+}
+
+<div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
+    <div class="xl:col-span-2 space-y-6">
+        <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+            <div class="glass p-5 relative overflow-hidden">
+                <div class="text-xs text-slate-400">Total Tickets</div>
+                <div class="mt-2 text-3xl font-semibold">@Model.TotalTickets</div>
+                <div class="mt-2 text-[11px] text-emerald-300/90">All-time volume</div>
+            </div>
+            <div class="glass p-5">
+                <div class="text-xs text-slate-400">Open</div>
+                <div class="mt-2 text-3xl font-semibold text-sky-200">@Model.OpenTickets</div>
+                <div class="mt-2 text-[11px] text-slate-500">Awaiting triage</div>
+            </div>
+            <div class="glass p-5">
+                <div class="text-xs text-slate-400">In progress</div>
+                <div class="mt-2 text-3xl font-semibold text-amber-200">@Model.PendingTickets</div>
+                <div class="mt-2 text-[11px] text-slate-500">Active work</div>
+            </div>
+            <div class="glass p-5 border-amber-500/15">
+                <div class="text-xs text-slate-400">Escalated</div>
+                <div class="mt-2 text-3xl font-semibold text-amber-100">@Model.EscalatedTickets</div>
+                <div class="mt-2 text-[11px] text-amber-200/70">SLA breach queue</div>
+            </div>
+            <div class="glass p-5">
+                <div class="text-xs text-slate-400">Resolved Today</div>
+                <div class="mt-2 text-3xl font-semibold text-emerald-200">@Model.ResolvedToday</div>
+                <div class="mt-2 text-[11px] text-emerald-300/80">UTC day boundary</div>
+            </div>
+            <div class="glass p-5 border-rose-500/20">
+                <div class="text-xs text-slate-400">Overdue (SLA)</div>
+                <div class="mt-2 text-3xl font-semibold text-rose-300">@Model.OverdueSla</div>
+                <div class="mt-2 text-[11px] text-rose-200/70">Needs attention</div>
+            </div>
+        </div>
+
+        <div class="glass p-5">
+            <div class="text-xs text-slate-400">SLA compliance (30 days)</div>
+            <div class="mt-2 text-3xl font-semibold text-emerald-200">@Model.SlaCompliancePercent%</div>
+            <div class="mt-2 text-[11px] text-slate-500">Share of resolved tickets closed on or before SLA deadline</div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div class="glass p-6">
+                <div class="text-sm font-semibold">Ticket trends</div>
+                <div class="text-xs text-slate-400">New tickets created — last 7 days</div>
+                <div class="mt-4 h-64">
+                    <canvas id="trendChart"></canvas>
+                </div>
+            </div>
+            <div class="glass p-6">
+                <div class="text-sm font-semibold">Agent performance (30 days)</div>
+                <div class="text-xs text-slate-400">Resolved count by agent</div>
+                <div class="mt-4 h-64">
+                    <canvas id="agentChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="glass p-6">
+            <div class="text-sm font-semibold">Resolution time trend</div>
+            <div class="text-xs text-slate-400">Average hours to resolve — last 14 days</div>
+            <div class="mt-4 h-64">
+                <canvas id="resolutionChart"></canvas>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <a class="glass p-5 hover:bg-white/5 transition" asp-controller="Admin" asp-action="Users">
+                <div class="text-sm font-semibold">Invite User</div>
+                <div class="text-xs text-slate-400 mt-1">Open user management</div>
+            </a>
+            <a class="glass p-5 hover:bg-white/5 transition" asp-controller="Admin" asp-action="AllTickets">
+                <div class="text-sm font-semibold">All Tickets</div>
+                <div class="text-xs text-slate-400 mt-1">View and filter all requests</div>
+            </a>
+            <a class="glass p-5 hover:bg-white/5 transition" asp-controller="Admin" asp-action="ExportTicketLog">
+                <div class="text-sm font-semibold">Export Logs</div>
+                <div class="text-xs text-slate-400 mt-1">Download ticket CSV</div>
+            </a>
+        </div>
+    </div>
+
+    <div class="space-y-6">
+        <div class="glass p-6">
+            <div class="text-sm font-semibold">Recent activity</div>
+            <div class="mt-4 space-y-3 max-h-[480px] overflow-y-auto pr-1">
+                @foreach (var a in Model.RecentActivity)
+                {
+                    var dot = a.Kind switch
+                    {
+                        "resolved" => "bg-emerald-400",
+                        "assigned" => "bg-sky-400",
+                        "alert" => "bg-rose-400",
+                        _ => "bg-slate-400"
+                    };
+                    <div class="flex gap-3 text-sm">
+                        <div class="mt-1.5 h-2 w-2 rounded-full @dot"></div>
+                        <div class="min-w-0">
+                            <div class="text-slate-200">@a.Message</div>
+                            <div class="text-[11px] text-slate-500">@a.AtUtc.ToLocalTime().ToString("g")</div>
+                        </div>
+                    </div>
+                }
+                @if (Model.RecentActivity.Count == 0)
+                {
+                    <div class="text-sm text-slate-500">No recent activity yet.</div>
+                }
+            </div>
+        </div>
+
+        <div class="glass p-6">
+            <div class="text-sm font-semibold">Quick actions</div>
+            <div class="mt-4 space-y-2">
+                <a class="block rounded-xl border border-white/10 bg-white/5 px-4 py-3 hover:bg-white/10" asp-controller="Admin" asp-action="AllTickets">All Tickets</a>
+                <a class="block rounded-xl border border-white/10 bg-white/5 px-4 py-3 hover:bg-white/10" asp-controller="Admin" asp-action="Users">User management</a>
+                <a class="block rounded-xl border border-white/10 bg-white/5 px-4 py-3 hover:bg-white/10" asp-controller="Admin" asp-action="ReassignTickets">Reassign tickets</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <script>
+        const labels = @Html.Raw(labelsJson);
+        const values = @Html.Raw(trendJson);
+        const agentData = @Html.Raw(Model.AgentPerformanceJson);
+        const resLabels = @Html.Raw(Model.ResolutionTrendLabelsJson);
+        const resValues = @Html.Raw(Model.ResolutionTrendValuesJson);
+
+        new Chart(document.getElementById('trendChart'), {
+            type: 'line',
+            data: {
+                labels,
+                datasets: [{
+                    label: 'Tickets created',
+                    data: values,
+                    borderColor: 'rgba(56, 189, 248, 0.9)',
+                    backgroundColor: 'rgba(56, 189, 248, 0.15)',
+                    fill: true,
+                    tension: 0.35,
+                    pointRadius: 3
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { labels: { color: '#e2e8f0' } } },
+                scales: {
+                    x: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(148,163,184,0.15)' } },
+                    y: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(148,163,184,0.15)' }, beginAtZero: true }
+                }
+            }
+        });
+
+        const agents = Array.isArray(agentData) ? agentData : [];
+        new Chart(document.getElementById('agentChart'), {
+            type: 'bar',
+            data: {
+                labels: agents.map(a => a.agentName),
+                datasets: [{
+                    label: 'Resolved',
+                    data: agents.map(a => a.resolvedCount),
+                    backgroundColor: 'rgba(56, 189, 248, 0.35)',
+                    borderColor: 'rgba(56, 189, 248, 0.9)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { labels: { color: '#e2e8f0' } } },
+                scales: {
+                    x: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(148,163,184,0.15)' } },
+                    y: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(148,163,184,0.15)' }, beginAtZero: true }
+                }
+            }
+        });
+
+        new Chart(document.getElementById('resolutionChart'), {
+            type: 'line',
+            data: {
+                labels: resLabels,
+                datasets: [{
+                    label: 'Avg resolution (h)',
+                    data: resValues,
+                    borderColor: 'rgba(167, 139, 250, 0.95)',
+                    backgroundColor: 'rgba(167, 139, 250, 0.12)',
+                    fill: true,
+                    tension: 0.35,
+                    pointRadius: 3
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { labels: { color: '#e2e8f0' } } },
+                scales: {
+                    x: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(148,163,184,0.15)' } },
+                    y: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(148,163,184,0.15)' }, beginAtZero: true }
+                }
+            }
+        });
+    </script>
+}

@@ -1,0 +1,31 @@
+@model List<ITBookingSystem.Models.InAppNotification>
+@foreach (var n in Model)
+{
+    <div class="px-4 py-3 border-b border-white/10 text-sm @(n.IsRead ? "" : "bg-sky-500/5")">
+        <div class="font-medium text-slate-100 flex items-center gap-2">
+            <span>@n.Title</span>
+            @if (!n.IsRead)
+            {
+                <span class="text-[10px] rounded-full bg-sky-500/20 text-sky-200 px-2 py-0.5">New</span>
+            }
+        </div>
+        <div class="text-xs text-slate-400 mt-1">@n.Message</div>
+        <div class="mt-2 flex items-center justify-between gap-2">
+            <span class="text-[10px] text-slate-500">@n.CreatedAtUtc.ToLocalTime().ToString("g")</span>
+            <div class="flex items-center gap-3">
+                @if (!string.IsNullOrEmpty(n.LinkUrl))
+                {
+                    <a class="text-xs text-sky-300 hover:underline" href="@n.LinkUrl">Open</a>
+                }
+                @if (!n.IsRead)
+                {
+                    <button type="button" class="notif-markread text-xs text-slate-300 hover:text-white" data-id="@n.Id">Mark read</button>
+                }
+            </div>
+        </div>
+    </div>
+}
+@if (Model.Count == 0)
+{
+    <div class="px-4 py-6 text-sm text-slate-500 text-center">No notifications yet.</div>
+}
