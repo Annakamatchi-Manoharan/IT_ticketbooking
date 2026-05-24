@@ -14,6 +14,9 @@ public class AppDbContext : DbContext
     public DbSet<Comment> Comments => Set<Comment>();
     public DbSet<TicketHistory> TicketHistories => Set<TicketHistory>();
     public DbSet<InAppNotification> Notifications => Set<InAppNotification>();
+    public DbSet<SupportFaq> SupportFaqs => Set<SupportFaq>();
+    public DbSet<UserChatHistory> UserChatHistories => Set<UserChatHistory>();
+    public DbSet<EngineerChatHistory> EngineerChatHistories => Set<EngineerChatHistory>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -70,5 +73,26 @@ public class AppDbContext : DbContext
 
         modelBuilder.Entity<Ticket>()
             .HasIndex(t => new { t.QueueStatus, t.AssignedAgentId, t.Status });
+
+        modelBuilder.Entity<SupportFaq>()
+            .HasIndex(f => f.Category);
+
+        modelBuilder.Entity<UserChatHistory>()
+            .HasOne(h => h.User)
+            .WithMany()
+            .HasForeignKey(h => h.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<UserChatHistory>()
+            .HasIndex(h => new { h.UserId, h.CreatedAt });
+
+        modelBuilder.Entity<EngineerChatHistory>()
+            .HasOne(h => h.Engineer)
+            .WithMany()
+            .HasForeignKey(h => h.EngineerId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<EngineerChatHistory>()
+            .HasIndex(h => new { h.EngineerId, h.CreatedAt });
     }
 }

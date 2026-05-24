@@ -53,6 +53,39 @@ namespace ITBookingSystem.Migrations
                     b.ToTable("Comments");
                 });
 
+            modelBuilder.Entity("ITBookingSystem.Models.EngineerChatHistory", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("BotResponse")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("EngineerId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("PredictedCategory")
+                        .HasMaxLength(120)
+                        .HasColumnType("nvarchar(120)");
+
+                    b.Property<string>("Query")
+                        .IsRequired()
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EngineerId", "CreatedAt");
+
+                    b.ToTable("EngineerChatHistories");
+                });
+
             modelBuilder.Entity("ITBookingSystem.Models.InAppNotification", b =>
                 {
                     b.Property<int>("Id")
@@ -89,6 +122,41 @@ namespace ITBookingSystem.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("Notifications");
+                });
+
+            modelBuilder.Entity("ITBookingSystem.Models.SupportFaq", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Category")
+                        .IsRequired()
+                        .HasMaxLength(120)
+                        .HasColumnType("nvarchar(120)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("IssueTitle")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<int>("ProblemType")
+                        .HasColumnType("int");
+
+                    b.Property<string>("StepsJson")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Category");
+
+                    b.ToTable("SupportFaqs");
                 });
 
             modelBuilder.Entity("ITBookingSystem.Models.Ticket", b =>
@@ -283,6 +351,32 @@ namespace ITBookingSystem.Migrations
                     b.ToTable("Users");
                 });
 
+            modelBuilder.Entity("ITBookingSystem.Models.UserChatHistory", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("SearchedIssue")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId", "CreatedAt");
+
+                    b.ToTable("UserChatHistories");
+                });
+
             modelBuilder.Entity("ITBookingSystem.Models.Comment", b =>
                 {
                     b.HasOne("ITBookingSystem.Models.Ticket", "Ticket")
@@ -300,6 +394,17 @@ namespace ITBookingSystem.Migrations
                     b.Navigation("Ticket");
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("ITBookingSystem.Models.EngineerChatHistory", b =>
+                {
+                    b.HasOne("ITBookingSystem.Models.User", "Engineer")
+                        .WithMany()
+                        .HasForeignKey("EngineerId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Engineer");
                 });
 
             modelBuilder.Entity("ITBookingSystem.Models.InAppNotification", b =>
@@ -347,6 +452,17 @@ namespace ITBookingSystem.Migrations
                     b.Navigation("ActorUser");
 
                     b.Navigation("Ticket");
+                });
+
+            modelBuilder.Entity("ITBookingSystem.Models.UserChatHistory", b =>
+                {
+                    b.HasOne("ITBookingSystem.Models.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("ITBookingSystem.Models.Ticket", b =>

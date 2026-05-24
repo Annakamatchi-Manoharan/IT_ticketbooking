@@ -33,9 +33,21 @@ public class TicketController : Controller
 
     [Authorize(Roles = "User,Admin")]
     [HttpGet]
-    public async Task<IActionResult> Create(CancellationToken ct)
+    public IActionResult Create(
+        [FromQuery] string? title,
+        [FromQuery] string? description,
+        [FromQuery] ProblemType? problemType)
     {
-        return View(new TicketCreateVm());
+        var vm = new TicketCreateVm();
+        if (!string.IsNullOrWhiteSpace(title))
+            vm.Ticket.Title = title.Trim();
+        if (!string.IsNullOrWhiteSpace(description))
+            vm.Ticket.Description = description.Trim();
+        if (problemType is not null)
+            vm.Ticket.ProblemType = problemType.Value;
+
+        ViewBag.ChatbotPrefill = problemType is not null || !string.IsNullOrWhiteSpace(description);
+        return View(vm);
     }
 
     [Authorize(Roles = "User,Admin")]

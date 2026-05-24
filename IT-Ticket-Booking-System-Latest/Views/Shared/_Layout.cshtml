@@ -6,6 +6,7 @@
     <title>@ViewData["Title"] - ITBookingSystem</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/chatbot.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/ITBookingSystem.styles.css" asp-append-version="true" />
 </head>
 <body class="h-full bg-slate-950 text-slate-100">
@@ -32,11 +33,23 @@
         </div>
     </div>
     <script src="~/js/site.js" asp-append-version="true"></script>
-    @if (User.Identity?.IsAuthenticated == true)
+   
+<script src="~/js/site.js" asp-append-version="true"></script>
+
+@if (User.Identity?.IsAuthenticated == true)
+{
+    var chatRole = User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value ?? "";
+
+    if (chatRole == "User" || chatRole == "Agent")
     {
-        <script src="https://cdn.jsdelivr.net/npm/@@microsoft/signalr@8.0.7/dist/browser/signalr.min.js"></script>
-        <script src="~/js/ticket-signalr.js" asp-append-version="true"></script>
+        <partial name="_ChatbotPartial" />
+        <script src="~/js/chatbot.js" asp-append-version="true"></script>
     }
-    @await RenderSectionAsync("Scripts", required: false)
+
+    <script src="https://cdn.jsdelivr.net/npm/@@microsoft/signalr@8.0.7/dist/browser/signalr.min.js"></script>
+    <script src="~/js/ticket-signalr.js" asp-append-version="true"></script>
+}
+
+@await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

@@ -39,6 +39,7 @@ try
     builder.Services.AddDataProtection();
 
     builder.Services.Configure<EmailOptions>(builder.Configuration.GetSection(EmailOptions.SectionName));
+    builder.Services.Configure<MlServiceOptions>(builder.Configuration.GetSection(MlServiceOptions.SectionName));
     builder.Services.AddScoped<IEmailSender, SmtpEmailSender>();
 
     builder.Services.AddSession(opts =>
@@ -87,6 +88,16 @@ try
     builder.Services.AddScoped<ITicketRepository, TicketRepository>();
     builder.Services.AddScoped<ITicketHistoryRepository, TicketHistoryRepository>();
     builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
+    builder.Services.AddScoped<IChatbotRepository, ChatbotRepository>();
+
+    builder.Services.AddHttpClient<IMlPredictionService, MlPredictionService>((sp, client) =>
+    {
+        var opts = sp.GetRequiredService<Microsoft.Extensions.Options.IOptions<MlServiceOptions>>().Value;
+        client.BaseAddress = new Uri(opts.BaseUrl.TrimEnd('/') + "/");
+        client.Timeout = TimeSpan.FromSeconds(opts.TimeoutSeconds);
+    });
+
+    builder.Services.AddScoped<IChatbotService, ChatbotService>();
 
     builder.Services.AddScoped<AuthService>();
     builder.Services.AddScoped<SLAService>();

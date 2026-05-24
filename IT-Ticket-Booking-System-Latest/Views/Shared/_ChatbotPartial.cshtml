@@ -1,0 +1,55 @@
+@using System.Security.Claims
+@using ITBookingSystem.Models
+@{
+    var role = User.FindFirstValue(ClaimTypes.Role) ?? "";
+    var showChatbot = role is nameof(UserRole.User) or nameof(UserRole.Agent);
+}
+@if (showChatbot)
+{
+    <div id="chatbot-root"
+         class="chatbot-root"
+         data-role="@(role == nameof(UserRole.Agent) ? "engineer" : "user")"
+         aria-live="polite">
+        <button type="button" id="chatbot-launcher" class="chatbot-launcher" aria-label="Open IT support assistant">
+            <span class="chatbot-launcher-icon">💬</span>
+            <span class="chatbot-launcher-pulse"></span>
+        </button>
+
+        <div id="chatbot-panel" class="chatbot-panel hidden" role="dialog" aria-modal="true" aria-labelledby="chatbot-title">
+            <header class="chatbot-header">
+                <div>
+                    <div id="chatbot-title" class="chatbot-title">IT Support Assistant</div>
+                    <div id="chatbot-subtitle" class="chatbot-subtitle">Guided help before you raise a ticket</div>
+                </div>
+                <button type="button" id="chatbot-close" class="chatbot-icon-btn" aria-label="Close chat">✕</button>
+            </header>
+
+            <div id="chatbot-messages" class="chatbot-messages"></div>
+
+            <div id="chatbot-user-footer" class="chatbot-footer hidden">
+                <div id="chatbot-quick-replies" class="chatbot-quick-replies"></div>
+                <div id="chatbot-step-nav" class="chatbot-step-nav hidden">
+                    <button type="button" class="chatbot-btn ghost" id="chatbot-prev">Previous</button>
+                    <button type="button" class="chatbot-btn ghost" id="chatbot-next">Next</button>
+                    <button type="button" class="chatbot-btn primary" id="chatbot-resolved-yes">Issue Resolved</button>
+                    <button type="button" class="chatbot-btn warn" id="chatbot-resolved-no">Not Resolved</button>
+                </div>
+                <div id="chatbot-escalate" class="chatbot-escalate hidden">
+                    <button type="button" class="chatbot-btn primary w-full" id="chatbot-create-ticket">Create Ticket</button>
+                </div>
+            </div>
+
+            <div id="chatbot-engineer-footer" class="chatbot-footer hidden">
+                <form id="chatbot-engineer-form" class="chatbot-engineer-form">
+                    @Html.AntiForgeryToken()
+                    <textarea id="chatbot-engineer-input"
+                              class="chatbot-input"
+                              rows="2"
+                              maxlength="2000"
+                              placeholder="Describe the issue (e.g. VPN not connecting)…"></textarea>
+                    <button type="submit" class="chatbot-btn primary">Ask AI</button>
+                </form>
+            </div>
+        </div>
+    </div>
+}

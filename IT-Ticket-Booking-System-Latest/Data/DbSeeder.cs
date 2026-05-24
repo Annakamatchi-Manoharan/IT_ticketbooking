@@ -99,6 +99,19 @@ public static class DbSeeder
         {
             // ignore
         }
+
+        try
+        {
+            if (!await db.SupportFaqs.AnyAsync(ct))
+            {
+                db.SupportFaqs.AddRange(SupportFaqSeedData.BuildDefaults());
+                await db.SaveChangesAsync(ct);
+            }
+        }
+        catch (Exception)
+        {
+            // Chatbot tables may not exist until migration is applied
+        }
     }
 
     /// <summary>Keeps agent <see cref="User.ActiveTicketCount"/> aligned with Open/InProgress assignments.</summary>
