@@ -1,0 +1,11 @@
+const express = require("express");
+const c = require("../controllers/ticket.controller");
+const { auth } = require("../middleware/auth");
+const { upload } = require("../middleware/upload");
+const r = express.Router();
+r.get("/", auth(["USER","AGENT","ADMIN"]), c.list);
+r.post("/", auth(["USER","AGENT","ADMIN"]), upload.single("attachment"), c.create);
+r.put("/:id", auth(["AGENT","ADMIN","USER"]), c.update);
+r.delete("/:id", auth(["ADMIN","USER"]), c.remove);
+r.post("/:id/comments", auth(["USER","AGENT","ADMIN"]), c.comment);
+module.exports = { ticketRouter: r };

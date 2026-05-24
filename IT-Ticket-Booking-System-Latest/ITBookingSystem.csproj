@@ -24,4 +24,10 @@
     <PackageReference Include="Serilog.Sinks.File" Version="6.0.0" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Compile Remove="ITBookingSystem.Tests\**\*.cs" />
+    <EmbeddedResource Remove="ITBookingSystem.Tests\**\*" />
+    <None Remove="ITBookingSystem.Tests\**\*" />
+  </ItemGroup>
+
 </Project>
